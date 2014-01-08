@@ -1,10 +1,15 @@
 package org.robospock.sample
 
+
 import android.widget.TextView
-import org.jakubczyk.robotest.R
+
 import org.robolectric.Robolectric
 import org.robolectric.annotation.Config
 import pl.polidea.robospock.RoboSpecification;
+
+import org.robospock.sample.MainActivity
+import org.robospock.sample.R
+
 
 @Config(manifest = "./robospock-sample/AndroidSampleProject/src/main/AndroidManifest.xml")
 class MainActivitySpecification extends RoboSpecification {
