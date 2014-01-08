@@ -1,0 +1,110 @@
+import org.gradle.api.artifacts.maven.MavenDeployment
+
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'groovy'
+
+group = 'org.robospock'
+version = '0.0.1'
+ext.packaging = 'jar'
+
+def isDevBuild
+def isCiBuild
+def isReleaseBuild
+
+def sonatypeRepositoryUrl
+
+if (hasProperty("release")) {
+    isReleaseBuild = true
+    sonatypeRepositoryUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+} else if (hasProperty("ci")) {
+    isCiBuild = true
+    version += "-SNAPSHOT"
+    sonatypeRepositoryUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+} else {
+    isDevBuild = true
+}
+
+artifacts {
+    archives jar
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile gradleApi()
+    compile 'com.android.tools.build:gradle:0.7.+'
+}
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle robospock plugin',
+                'Implementation-Version': version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.8'
+}
+
+uploadArchives {
+    repositories {
+        if (isDevBuild) {
+            mavenLocal()
+        } else {
+            mavenDeployer {
+                if (isReleaseBuild) {
+                    beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+                }
+                repository(url: sonatypeRepositoryUrl) {
+                    authentication(userName: sonatypeUsername, password: sonatypePassword)
+                }
+                pom.project {
+                    name 'Gradle Robospock plugin'
+                    group 'org.robospock'
+                    artifactId 'robospock-plugin'
+
+                    description 'Gradle plugin that provides running Android unit tests on local machine using Robospock'
+                    url 'https://github.com/pjakubczyk/robospock-plugin'
+                    inceptionYear '2014'
+
+                    scm {
+                        url 'https://github.com/pjakubczyk/robospock-plugin'
+                        connection 'scm:git@github.com:pjakubczyk/robospock-plugin.git'
+                        developerConnection 'scm:git@github.com:pjakubczyk/robospock-plugin.git'
+                    }
+
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'pjakubczyk'
+                            name 'Przemek Jakubczyk'
+                            email 'pjakubczyk@gmail.com'
+                        }
+                        developer {
+                            id 'wojtek.erbetowski'
+                            name 'Wojtek Erbetowski'
+                            email 'wojtek@erbetowski.pl'
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+include 'robospock-plugin'
+
+include 'robospock-sample/AndroidSampleProject'
+project(':robospock-sample/AndroidSampleProject').name = 'android-sample'
+
+include 'robospock-sample/Robospock'
+project(':robospock-sample/Robospock').name = 'robospock-sample'
+
+
+
