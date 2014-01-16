@@ -1,38 +1,35 @@
-import org.gradle.api.artifacts.maven.MavenDeployment
-
 apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'groovy'
+apply plugin: 'signing'
 
 group = 'org.robospock'
 version = '0.0.1'
 ext.packaging = 'jar'
 
-def isDevBuild
-def isCiBuild
-def isReleaseBuild
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
 
-def sonatypeRepositoryUrl
-
-if (hasProperty("release")) {
-    isReleaseBuild = true
-    sonatypeRepositoryUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-} else if (hasProperty("ci")) {
-    isCiBuild = true
-    version += "-SNAPSHOT"
-    sonatypeRepositoryUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-} else {
-    isDevBuild = true
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
 }
 
 artifacts {
     archives jar
+    archives javadocJar
+    archives sourcesJar
 }
-
 
 repositories {
     mavenCentral()
+}
+
+signing {
+    sign configurations.archives
 }
 
 dependencies {
@@ -57,52 +54,48 @@ task wrapper(type: Wrapper) {
 
 uploadArchives {
     repositories {
-        if (isDevBuild) {
-            mavenLocal()
-        } else {
-            mavenDeployer {
-                if (isReleaseBuild) {
-                    beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-                }
-                repository(url: sonatypeRepositoryUrl) {
-                    authentication(userName: sonatypeUsername, password: sonatypePassword)
-                }
-                pom.project {
-                    name 'Gradle Robospock plugin'
-                    group 'org.robospock'
-                    artifactId 'robospock-plugin'
+        mavenDeployer {
 
-                    description 'Gradle plugin that provides running Android unit tests on local machine using Robospock'
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2") {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
+            pom.project {
+                name 'Gradle Robospock plugin'
+                group 'org.robospock'
+                artifactId 'robospock-plugin'
+
+                description 'Gradle plugin that provides running Android unit tests on local machine using Robospock'
+                url 'https://github.com/pjakubczyk/robospock-plugin'
+                inceptionYear '2014'
+
+                scm {
                     url 'https://github.com/pjakubczyk/robospock-plugin'
-                    inceptionYear '2014'
+                    connection 'scm:git@github.com:pjakubczyk/robospock-plugin.git'
+                    developerConnection 'scm:git@github.com:pjakubczyk/robospock-plugin.git'
+                }
 
-                    scm {
-                        url 'https://github.com/pjakubczyk/robospock-plugin'
-                        connection 'scm:git@github.com:pjakubczyk/robospock-plugin.git'
-                        developerConnection 'scm:git@github.com:pjakubczyk/robospock-plugin.git'
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'pjakubczyk'
+                        name 'Przemek Jakubczyk'
+                        email 'pjakubczyk@gmail.com'
+                    }
+                    developer {
+                        id 'wojtek.erbetowski'
+                        name 'Wojtek Erbetowski'
+                        email 'wojtek@erbetowski.pl'
                     }
 
-                    licenses {
-                        license {
-                            name 'The Apache Software License, Version 2.0'
-                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                            distribution 'repo'
-                        }
-                    }
-
-                    developers {
-                        developer {
-                            id 'pjakubczyk'
-                            name 'Przemek Jakubczyk'
-                            email 'pjakubczyk@gmail.com'
-                        }
-                        developer {
-                            id 'wojtek.erbetowski'
-                            name 'Wojtek Erbetowski'
-                            email 'wojtek@erbetowski.pl'
-                        }
-
-                    }
                 }
             }
         }
