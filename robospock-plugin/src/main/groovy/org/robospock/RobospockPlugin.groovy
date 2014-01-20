@@ -3,8 +3,10 @@ package org.robospock
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.BaseExtension
+import com.android.build.gradle.BasePlugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.testing.Test
 
@@ -17,16 +19,16 @@ class RobospockPlugin implements Plugin<Project> {
 
         project.getPlugins().apply(JavaBasePlugin.class);
 
-        Project androidProject
+        def projectDependencies
+        project.dependencies.each { projectDependencies = it.configurationContainer.all.find{ it.name == 'default'}.getAllDependencies() }
 
-        def appPlugin
+        def dependency = projectDependencies.find{ it instanceof DefaultProjectDependency}
 
-        project.getRootProject().getAllprojects().each {
-            if (it.plugins.hasPlugin("android")) {
-                androidProject = it
-                appPlugin = it.plugins["android"]
-            }
-        }
+        def projectName = dependency.dependencyProject.name
+
+        Project androidProject = project.rootProject.allprojects.find { it.name == projectName}
+
+        def appPlugin = androidProject.plugins["android"]
 
         // take first output dir on found variant
         def defaultOutputDir = appPlugin.variantDataList[0].variantConfiguration.mDirName
