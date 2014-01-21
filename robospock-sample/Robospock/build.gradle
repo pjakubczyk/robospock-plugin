@@ -14,6 +14,7 @@ repositories {
 }
 
 apply plugin: "groovy"
+apply plugin: 'robospock'
 
 dependencies {
     compile "org.codehaus.groovy:groovy-all:1.8.6"
@@ -21,4 +22,3 @@ dependencies {
     compile project(":android-sample")
 }
 
-apply plugin: 'robospock'

@@ -1,9 +1,6 @@
 package org.robospock
 
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.AppPlugin
-import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.BasePlugin
+import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
@@ -19,36 +16,50 @@ class RobospockPlugin implements Plugin<Project> {
 
         project.getPlugins().apply(JavaBasePlugin.class);
 
-        def projectDependencies
-        project.dependencies.each { projectDependencies = it.configurationContainer.all.find{ it.name == 'default'}.getAllDependencies() }
+        project.afterEvaluate(new Action<Project>() {
 
-        def dependency = projectDependencies.find{ it instanceof DefaultProjectDependency}
+            void execute(Project projectAfterEvaluate) {
+                def projectDependencies
 
-        def projectName = dependency.dependencyProject.name
+                projectAfterEvaluate.dependencies.each {
+                    projectDependencies = it.configurationContainer.all.find {
+                        it.name == 'default'
+                    }.getAllDependencies()
+                }
 
-        Project androidProject = project.rootProject.allprojects.find { it.name == projectName}
+                def dependency = projectDependencies.find { it instanceof DefaultProjectDependency }
 
-        def appPlugin = androidProject.plugins["android"]
+                def projectName = dependency.dependencyProject.name
 
-        // take first output dir on found variant
-        def defaultOutputDir = appPlugin.variantDataList[0].variantConfiguration.mDirName
+                Project androidProject = projectAfterEvaluate.rootProject.allprojects.find {
+                    it.name == projectName
+                }
 
-        def classesDir = androidProject.buildDir.path + '/classes/' + defaultOutputDir
-        def resDir = androidProject.buildDir.path + '/res/all/' + defaultOutputDir
+                def appPlugin = androidProject.plugins["android"]
 
-        project.dependencies {
-            compile project.files(classesDir)
-            compile project.files(resDir)
-        }
+                // take first output dir on found variant
+                def defaultOutputDir = appPlugin.variantDataList[0].variantConfiguration.mDirName
 
-        Test test = project.getTasks().create(ROBOSPOCK_TASK_NAME, Test.class);
-        project.getTasks().getByName(JavaBasePlugin.CHECK_TASK_NAME).dependsOn(test);
-        test.setDescription("Runs the unit tests using Robospock.")
-        test.setGroup(JavaBasePlugin.VERIFICATION_GROUP)
+                def classesDir = androidProject.buildDir.path + '/classes/' + defaultOutputDir
+                def resDir = androidProject.buildDir.path + '/res/all/' + defaultOutputDir
 
-        test.workingDir = project.getRootProject().projectDir
+                project.dependencies {
+                    compile project.files(classesDir)
+                    compile project.files(resDir)
+                }
 
-        test.dependsOn(androidProject.getTasks().findByName('assemble'))
+
+
+                Test test = project.getTasks().create(ROBOSPOCK_TASK_NAME, Test.class);
+                project.getTasks().getByName(JavaBasePlugin.CHECK_TASK_NAME).dependsOn(test);
+                test.setDescription("Runs the unit tests using Robospock.")
+                test.setGroup(JavaBasePlugin.VERIFICATION_GROUP)
+
+                test.workingDir = project.getRootProject().projectDir
+
+                test.dependsOn(androidProject.getTasks().findByName('assemble'))
+            }
+        })
     }
 
 }
