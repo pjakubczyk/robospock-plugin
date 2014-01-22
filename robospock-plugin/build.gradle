@@ -5,7 +5,7 @@ apply plugin: 'groovy'
 apply plugin: 'signing'
 
 group = 'org.robospock'
-version = '0.0.1'
+version = '0.2.1'
 ext.packaging = 'jar'
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
