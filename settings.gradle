@@ -3,6 +3,12 @@ include 'robospock-plugin'
 include 'robospock-sample/AndroidSampleProject'
 project(':robospock-sample/AndroidSampleProject').name = 'android-sample'
 
+include 'robospock-sample/AndroidSampleLibraryDb'
+project(':robospock-sample/AndroidSampleLibraryDb').name = 'android-sample-lib-db'
+
+include 'robospock-sample/AndroidSampleLibraryJson'
+project(':robospock-sample/AndroidSampleLibraryJson').name = 'android-sample-lib-json'
+
 include 'robospock-sample/Robospock'
 project(':robospock-sample/Robospock').name = 'robospock-sample'
 

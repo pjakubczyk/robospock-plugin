@@ -7,21 +7,21 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.j256.ormlite.dao.Dao;
 
 import org.robospock.sample.db.Account;
+import org.robospock.sample.db.AccountHelper;
 
-import java.io.IOException;
 import java.sql.SQLException;
 
 import javax.inject.Inject;
 
+import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 public class MainActivity extends Activity {
+
+    public static final String TAG = MainActivity.class.getSimpleName();
 
     @Inject
     Dao<Account, Integer> accountDao;
@@ -34,32 +34,18 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_main);
 
+        ButterKnife.inject(this);
+
         SampleApplication.getApp().getObjectGraph().inject(this);
 
+        AccountHelper.createSampleAccounts(accountDao);
+
         try {
-            accountDao.create(new Account("John", "pass"));
+            Account account = accountDao.queryForAll().get(0);
+
+            tv.setText(account.toString());
         } catch (SQLException e) {
-            Log.e("TAG", e.getMessage());
-        }
-
-
-        try {
-            tv.setText(accountDao.queryForAll().get(0).getName());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonFactory jsonFactory = objectMapper.getFactory();
-
-        try {
-            JsonParser jp = jsonFactory.createParser(source);
-
-            Account[] accounts = objectMapper.readValue(jp, Account[].class);
-            tv.setText(accounts[1].getName());
-        } catch (IOException e) {
-            e.printStackTrace();
+            Log.d(TAG, e.getMessage());
         }
 
     }
@@ -84,19 +70,4 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-
-    String source = "[\n" +
-            "{\n" +
-            "\"name\":\"John\",\n" +
-            "\"password\":\"8aecfd9b2fa26e83012fa298c2a50017\"\n" +
-            "},\n" +
-            "{\n" +
-            "\"name\":\"Mark\",\n" +
-            "\"password\":\"8aecfd9b2fa26e83012fa298c2a90018\"\n" +
-            "},\n" +
-            "{\n" +
-            "\"name\": \"Jane\",\n" +
-            "\"password\":\"8aecfd9b2fa26e83012fa298c2ae0019\"\n" +
-            "}\n" +
-            "]\n";
 }

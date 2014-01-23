@@ -51,6 +51,9 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public Dao<Account, Integer> getAccountDao() throws SQLException {
         if (accountDao == null) {
             accountDao = getDao(Account.class);
+
+            // just to have always clear table
+            TableUtils.clearTable(accountDao.getConnectionSource(), Account.class);
         }
         return accountDao;
     }
@@ -59,6 +62,5 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     public void close() {
         super.close();
         accountDao = null;
-
     }
 }
