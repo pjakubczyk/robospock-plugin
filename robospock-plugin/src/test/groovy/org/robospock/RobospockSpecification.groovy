@@ -11,7 +11,10 @@ import spock.lang.Specification
 class RobospockSpecification extends Specification {
 
     static final LIB_PROJECT_NAME = "sample_name"
+    static final LIB_PROJECT_NAME_2 = "sample_name2"
     static final SAMPLE_MAVEN_DEP = "com.jakewharton:butterknife:4.0.1"
+    static final SAMPLE_MAVEN_DEP_2 = "com.fasterxml.jackson.core:jackson-core:2.3.0"
+    static final SAMPLE_MAVEN_DEP_3 = "com.fasterxml.jackson.core:jackson-databind:2.3.0"
 
     static final ANDROID_PLUGIN_PATH = 'com.android.tools.build:gradle:0.7.+'
 
@@ -36,27 +39,20 @@ class RobospockSpecification extends Specification {
         }
 
         when: "extract all dependencies"
-        def dependencies = robospockAction.getProjectDependencies(androidProject)
+        def dependencies = robospockAction.findCompileDependencies(androidProject)
 
         then:
         dependencies.size() == 2
     }
 
     def "check number of maven dependencies"() {
-        setup: "create library project"
-        createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME)
-
-        and: "add dependencies to android project"
+        setup: "add dependencies to android project"
         androidProject.dependencies {
             compile SAMPLE_MAVEN_DEP
-            compile rootProject.project(LIB_PROJECT_NAME)
         }
 
-        and: "extract all dependencies"
-        def dependencies = robospockAction.getProjectDependencies(androidProject)
-
         when: "extract maven dependencies"
-        def maven = robospockAction.getProjectMavenDependencies(dependencies)
+        def maven = robospockAction.findMavenDependencies(androidProject)
 
         then:
         maven.size() == 1
@@ -68,20 +64,94 @@ class RobospockSpecification extends Specification {
 
         and: "add dependencies to android project"
         androidProject.dependencies {
-            compile SAMPLE_MAVEN_DEP
             compile rootProject.project(LIB_PROJECT_NAME)
         }
 
-        and: "extract all dependencies"
-        def dependencies = robospockAction.getProjectDependencies(androidProject)
-
         when: "extract library dependencies"
-        def libraries = robospockAction.getProjectLibraryDependencies(dependencies)
+        def libraries = robospockAction.findLibraryDependencies(androidProject)
 
         then:
         libraries.size() == 1
     }
 
+    def "check number of maven dependencies in chained library relation"() {
+        setup: "create library project"
+        def libraryProject = createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME)
+
+        and: "add dependencies to library project"
+        libraryProject.dependencies {
+            compile SAMPLE_MAVEN_DEP
+        }
+
+        and: "create mid library project"
+        def midLibraryProject = createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME_2)
+
+        and: "add dependencies to mid library"
+        midLibraryProject.dependencies {
+            compile SAMPLE_MAVEN_DEP_2
+            compile SAMPLE_MAVEN_DEP_3
+            compile rootProject.project(LIB_PROJECT_NAME)
+        }
+
+        and: "add dependencies to android project"
+        androidProject.dependencies {
+            compile rootProject.project(LIB_PROJECT_NAME_2)
+        }
+
+        when: "extract library dependencies"
+        def libraries = robospockAction.collectMavenDependencies(robospockAction.getSubprojects(androidProject))
+
+        then:
+        libraries.size() == 3
+    }
+
+    def "check number of library dependencies in chained library relation"() {
+        setup: "create library project"
+        createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME)
+
+        and: "create mid library project"
+        def midLibraryProject = createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME_2)
+
+        and: "add dependencies to mid library"
+        midLibraryProject.dependencies {
+            compile rootProject.project(LIB_PROJECT_NAME)
+        }
+
+        and: "add dependencies to android project"
+        androidProject.dependencies {
+            compile rootProject.project(LIB_PROJECT_NAME_2)
+        }
+
+        when: "extract library dependencies"
+        def subprojects = robospockAction.getSubprojects(androidProject)
+
+        then:
+        subprojects.size() == 2
+    }
+
+    def "check number of library dependencies"() {
+        setup: "create library project"
+        createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME)
+
+        and: "add dependencies to android project"
+        androidProject.dependencies {
+            compile rootProject.project(LIB_PROJECT_NAME)
+        }
+
+        when: "extract library dependencies"
+        def subprojects = robospockAction.getSubprojects(androidProject)
+
+        then:
+        subprojects.size() == 1
+    }
+
+    def "check number of library dependencies in zero related project"() {
+        when: "extract library dependencies"
+        def subprojects = robospockAction.getSubprojects(androidProject)
+
+        then:
+        subprojects.size() == 0
+    }
 
     Project createAndroidProject(Project rootProject) {
         Project androidProject = ProjectBuilder.builder().withParent(rootProject).build()

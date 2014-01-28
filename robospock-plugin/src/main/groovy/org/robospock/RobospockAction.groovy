@@ -32,34 +32,15 @@ class RobospockAction implements Action<Project> {
 
         def androidProject = androidProjects.first()
 
-        // collect android project dependencies
-        def androidProjectDependenciesList = getProjectDependencies(androidProject)
+        // collect and extract compiled classes in library project
+        def subprojects = getSubprojects(androidProject)
 
-
-
-        def mavenDependencies = getProjectMavenDependencies(androidProjectDependenciesList)
-
-        def androidLibraryDependencies = getProjectLibraryDependencies(androidProjectDependenciesList)
-
-
-        androidLibraryDependencies.each {
-            addMavenDependencies(mavenDependencies, it)
-        }
-
-
-        println "deeeps"
-
-        mavenDependencies.each { println it}
-
-        androidLibraryDependencies.each {
-
-            findAndroidProjects(findProjectByDependency(project, it)).each {
-
-
-                getProjectDependencies(it)
-
-            }
-        }
+        // collect and forward all maven dependencies
+        // TODO: refactor
+        def allprojects = []
+        allprojects.addAll(subprojects)
+        allprojects.add(androidProject)
+        def mavenDependencies = collectMavenDependencies(allprojects)
 
         mavenDependencies.each { dep ->
             project.dependencies {
@@ -68,7 +49,6 @@ class RobospockAction implements Action<Project> {
         }
 
         // add support for library
-
         def appPlugin = androidProject.plugins["android"]
         // take first output dir on found variant
         def defaultOutputDir = appPlugin.variantDataList[0].variantConfiguration.mDirName
@@ -81,6 +61,20 @@ class RobospockAction implements Action<Project> {
             compile project.files(resDir)
         }
 
+        subprojects.each {
+            def libPlugin = it.plugins["android-library"]
+
+            // ugly: get release build dir  FIXIT
+            defaultOutputDir = libPlugin.variantDataList[1].variantConfiguration.mDirName
+
+            classesDir = it.buildDir.path + '/classes/' + defaultOutputDir
+            resDir = it.buildDir.path + '/res/all/' + defaultOutputDir
+
+            project.dependencies {
+                compile project.files(classesDir)
+                compile project.files(resDir)
+            }
+        }
 
 
         Test test = project.getTasks().create(ROBOSPOCK_TASK_NAME, Test.class);
@@ -105,11 +99,11 @@ class RobospockAction implements Action<Project> {
         }
     }
 
-    def findProjectByDependency(Project project, DefaultProjectDependency dependency){
-        project.rootProject.allprojects.find { it.name == dependency.dependencyProject.name}
+    def findProjectByDependency(Project project, DefaultProjectDependency dependency) {
+        project.rootProject.allprojects.find { it.name == dependency.dependencyProject.name }
     }
 
-    def getProjectDependencies(Project androidProject) {
+    def findCompileDependencies(Project androidProject) {
         def androidProjectDependenciesList = new ArrayList()
 
         androidProject.dependencies.each {
@@ -121,15 +115,43 @@ class RobospockAction implements Action<Project> {
         return androidProjectDependenciesList
     }
 
-    def getProjectMavenDependencies(def dependencies) {
-        dependencies.findAll { it instanceof DefaultExternalModuleDependency }
+    def findMavenDependencies(Project androidProject) {
+        findCompileDependencies(androidProject).findAll {
+            it instanceof DefaultExternalModuleDependency
+        }
     }
 
-    def getProjectLibraryDependencies(def dependencies) {
-        dependencies.findAll { it instanceof DefaultProjectDependency }
+    def findLibraryDependencies(Project androidProject) {
+        findCompileDependencies(androidProject).findAll { it instanceof DefaultProjectDependency }
     }
 
-    void addMavenDependencies(def collection, def dependencies){
-        collection.add( getProjectMavenDependencies (dependencies) )
+    // ----------- extract all libraries --------------
+    def getSubprojects(Project androidProject) {
+        def projects = []
+
+        extractSubprojects(androidProject, projects)
+
+        projects
+    }
+
+    def extractSubprojects(Project libraryProject, List<Project> projects) {
+        def projectLibraryDependencies = findLibraryDependencies(libraryProject)
+
+        def collect = projectLibraryDependencies.collect {
+            findProjectByDependency(libraryProject, it)
+        }
+
+        collect.each { extractSubprojects(it, projects) }
+
+        projects.addAll(collect)
+    }
+    // ----------- end of section --------------
+
+    def collectMavenDependencies(List<Project> projects) {
+        def collection = []
+
+        projects.each { collection.addAll(findMavenDependencies(it)) }
+
+        collection
     }
 }
