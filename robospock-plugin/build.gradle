@@ -5,8 +5,7 @@ apply plugin: 'groovy'
 apply plugin: 'signing'
 
 group = 'org.robospock'
-version = '0.2.2'
-ext.packaging = 'jar'
+version = '0.3.0'
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
@@ -35,7 +34,7 @@ signing {
 dependencies {
     compile gradleApi()
     compile 'com.android.tools.build:gradle:0.7.+'
-    groovy "org.codehaus.groovy:groovy-all:1.8.6"
+    compile "org.codehaus.groovy:groovy-all:1.8.6"
     testCompile "org.spockframework:spock-core:0.6-groovy-1.8"
 }
 
@@ -65,8 +64,7 @@ uploadArchives {
             }
             pom.project {
                 name 'Gradle Robospock plugin'
-                group 'org.robospock'
-                artifactId 'robospock-plugin'
+                packaging = 'jar'
 
                 description 'Gradle plugin that provides running Android unit tests on local machine using Robospock'
                 url 'https://github.com/pjakubczyk/robospock-plugin'

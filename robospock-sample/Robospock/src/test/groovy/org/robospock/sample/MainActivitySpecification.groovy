@@ -22,7 +22,7 @@ class MainActivitySpecification extends RoboSpecification {
         def tv = (TextView) mainActivity.findViewById(R.id.tv)
 
         then:
-        "Hello world!" == tv.getText()
+        "Account{name='JohnWhite', password='24a28dbe'}" == tv.getText()
     }
 
 }

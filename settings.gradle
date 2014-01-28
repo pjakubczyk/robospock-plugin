@@ -11,6 +11,3 @@ project(':robospock-sample/AndroidSampleLibraryJson').name = 'android-sample-lib
 
 include 'robospock-sample/Robospock'
 project(':robospock-sample/Robospock').name = 'robospock-sample'
-
-
-
