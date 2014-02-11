@@ -16,7 +16,7 @@ class RobospockSpecification extends Specification {
     static final SAMPLE_MAVEN_DEP_2 = "com.fasterxml.jackson.core:jackson-core:2.3.0"
     static final SAMPLE_MAVEN_DEP_3 = "com.fasterxml.jackson.core:jackson-databind:2.3.0"
 
-    static final ANDROID_PLUGIN_PATH = 'com.android.tools.build:gradle:0.7.+'
+    static final ANDROID_PLUGIN_PATH = 'com.android.tools.build:gradle:0.8.+'
 
     Project rootProject
     Project androidProject
@@ -153,6 +153,37 @@ class RobospockSpecification extends Specification {
         subprojects.size() == 0
     }
 
+    def "check if library project can be found"() {
+        setup: "create library project"
+        createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME)
+
+        when: "find projects"
+        def result = robospockAction.findAndroidProjects(LIB_PROJECT_NAME, rootProject)
+
+        then:
+        result.size() == 1
+        result.first().plugins.hasPlugin('android-library')
+    }
+
+    def "should find android plugin"() {
+        when:
+        def plugin = robospockAction.getAndroidPlugin(androidProject)
+
+        then:
+        plugin
+    }
+
+    def "should find android library plugin"() {
+        setup: "create library project"
+        def libraryProject = createAndroidLibraryProject(rootProject, LIB_PROJECT_NAME)
+
+        when:
+        def plugin = robospockAction.getAndroidPlugin(libraryProject)
+
+        then:
+        plugin
+    }
+
     Project createAndroidProject(Project rootProject) {
         Project androidProject = ProjectBuilder.builder().withParent(rootProject).build()
         def file = new File(androidProject.rootDir, SdkConstants.FN_LOCAL_PROPERTIES);
@@ -198,4 +229,5 @@ class RobospockSpecification extends Specification {
 
         androidLibraryProject
     }
+
 }

@@ -49,7 +49,7 @@ class RobospockAction implements Action<Project> {
         }
 
         // add support for library
-        def appPlugin = androidProject.plugins["android"]
+        def appPlugin = getAndroidPlugin(androidProject)
         // take first output dir on found variant
         def defaultOutputDir = appPlugin.variantDataList[0].variantConfiguration.mDirName
 
@@ -153,5 +153,12 @@ class RobospockAction implements Action<Project> {
         projects.each { collection.addAll(findMavenDependencies(it)) }
 
         collection
+    }
+
+    def getAndroidPlugin(Project project){
+        if(project.plugins.hasPlugin("android"))
+            project.plugins["android"]
+        else
+            project.plugins["android-library"]
     }
 }

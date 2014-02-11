@@ -5,7 +5,7 @@ apply plugin: 'groovy'
 apply plugin: 'signing'
 
 group = 'org.robospock'
-version = '0.3.0'
+version = '0.3.1'
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
@@ -33,7 +33,7 @@ signing {
 
 dependencies {
     compile gradleApi()
-    compile 'com.android.tools.build:gradle:0.7.+'
+    compile "com.android.tools.build:gradle:${pluginVersion}"
     compile "org.codehaus.groovy:groovy-all:1.8.6"
     testCompile "org.spockframework:spock-core:0.6-groovy-1.8"
 }
@@ -50,7 +50,7 @@ jar {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.8'
+    gradleVersion = '1.10'
 }
 
 uploadArchives {
