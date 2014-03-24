@@ -48,34 +48,21 @@ class RobospockAction implements Action<Project> {
             }
         }
 
-        // add support for library
-        def appPlugin = getAndroidPlugin(androidProject)
-        // take first output dir on found variant
-        def defaultOutputDir = appPlugin.variantDataList[0].variantConfiguration.mDirName
+        allprojects.each { proj ->
 
-        def classesDir = androidProject.buildDir.path + '/classes/' + defaultOutputDir
-        def resDir = androidProject.buildDir.path + '/res/all/' + defaultOutputDir
-
-        project.dependencies {
-            compile project.files(classesDir)
-            compile project.files(resDir)
-        }
-
-        subprojects.each {
-            def libPlugin = it.plugins["android-library"]
-
-            // ugly: get release build dir  FIXIT
-            defaultOutputDir = libPlugin.variantDataList[1].variantConfiguration.mDirName
-
-            classesDir = it.buildDir.path + '/classes/' + defaultOutputDir
-            resDir = it.buildDir.path + '/res/all/' + defaultOutputDir
-
-            project.dependencies {
-                compile project.files(classesDir)
-                compile project.files(resDir)
+            def rDir = new File(proj.buildDir.path + "/source/r").list()[0]
+            project.sourceSets {
+                main {
+                    java {
+                        srcDir proj.android.sourceSets.main.java
+                        srcDir proj.buildDir.path + "/source/r/" + rDir
+                    }
+                    resources {
+                        srcDir proj.android.sourceSets.main.res
+                    }
+                }
             }
         }
-
 
         Test test = project.getTasks().create(ROBOSPOCK_TASK_NAME, Test.class);
         project.getTasks().getByName(JavaBasePlugin.CHECK_TASK_NAME).dependsOn(test);
@@ -84,7 +71,7 @@ class RobospockAction implements Action<Project> {
 
         test.workingDir = project.getRootProject().projectDir
 
-        test.dependsOn(androidProject.getTasks().findByName('assemble'))
+        test.dependsOn(androidProject.getTasks().findByName('assembleDebug'))
     }
 
     def findAndroidProjects(String name, Project project) {

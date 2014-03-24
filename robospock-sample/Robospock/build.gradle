@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath "com.android.tools.build:gradle:${pluginVersion}"
-        classpath 'org.robospock:robospock-plugin:0.3.0'
+        classpath 'org.robospock:robospock-plugin:0.3.2'
     }
 }
 
@@ -21,4 +21,3 @@ dependencies {
     compile 'org.robospock:robospock:0.4'
     compile project(":android-sample")
 }
-

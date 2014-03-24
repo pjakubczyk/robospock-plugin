@@ -43,11 +43,15 @@ public class MainActivity extends Activity {
         try {
             Account account = accountDao.queryForAll().get(0);
 
-            tv.setText(account.toString());
+            tv.setText(get());
         } catch (SQLException e) {
             Log.d(TAG, e.getMessage());
         }
 
+    }
+
+    public String get(){
+        return "TEST";
     }
 
     @Override
