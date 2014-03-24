@@ -23,12 +23,19 @@ android {
     }
 
     productFlavors {
+
+        flavorGroups "abi", "version"
+
         flavor1 {
-
-
+            flavorGroup "abi"
         }
 
         flavor2 {
+            flavorGroup "version"
+        }
+
+        flavour3 {
+            flavorGroup "abi"
         }
     }
 

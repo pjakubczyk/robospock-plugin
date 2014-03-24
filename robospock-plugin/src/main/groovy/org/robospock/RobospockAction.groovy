@@ -50,7 +50,12 @@ class RobospockAction implements Action<Project> {
 
         allprojects.each { proj ->
 
-            def rDir = new File(proj.buildDir.path + "/source/r").list()[0]
+            def rDir
+            if (proj.plugins.hasPlugin("android"))
+                rDir = (proj.android.applicationVariants as List)[0].dirName
+            else
+                rDir = (proj.android.libraryVariants as List)[0].dirName
+
             project.sourceSets {
                 main {
                     java {
@@ -142,8 +147,8 @@ class RobospockAction implements Action<Project> {
         collection
     }
 
-    def getAndroidPlugin(Project project){
-        if(project.plugins.hasPlugin("android"))
+    def getAndroidPlugin(Project project) {
+        if (project.plugins.hasPlugin("android"))
             project.plugins["android"]
         else
             project.plugins["android-library"]
