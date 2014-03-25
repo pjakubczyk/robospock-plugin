@@ -14,32 +14,13 @@ class RobospockAction implements Action<Project> {
 
     @Override
     void execute(Project project) {
-        def projectDependencies
-
-        project.dependencies.each {
-            projectDependencies = it.configurationContainer.all.find {
-                it.name == 'default'
-            }.getAllDependencies()
-        }
-
-        def dependency = projectDependencies.find { it instanceof DefaultProjectDependency }
-
-        def projectName = dependency.dependencyProject.name
-
-        def androidProjects = findAndroidProjects(projectName, project)
-
-        if (androidProjects.size() != 1) throw new GradleException("Found zero or more than two projects to test")
-
-        def androidProject = androidProjects.first()
+        def androidProject = project.project(project.ext.robospock)
 
         // collect and extract compiled classes in library project
         def subprojects = getSubprojects(androidProject)
 
         // collect and forward all maven dependencies
-        // TODO: refactor
-        def allprojects = []
-        allprojects.addAll(subprojects)
-        allprojects.add(androidProject)
+        def allprojects = subprojects + androidProject
         def mavenDependencies = collectMavenDependencies(allprojects)
 
         mavenDependencies.each { dep ->
@@ -48,28 +29,28 @@ class RobospockAction implements Action<Project> {
             }
         }
 
-        allprojects.each { proj ->
+        def allSourceSets = ['src/main/java']
+        def allResourcesSets = ['src/main/res']
 
+        allprojects.each { proj ->
             def rDir
             if (proj.plugins.hasPlugin("android"))
                 rDir = (proj.android.applicationVariants as List)[0].dirName
             else
                 rDir = (proj.android.libraryVariants as List)[0].dirName
 
-            project.sourceSets {
-                main {
-                    java {
-                        srcDir proj.android.sourceSets.main.java
-                        srcDir proj.buildDir.path + "/source/r/" + rDir
-                    }
-                    resources {
-                        srcDir proj.android.sourceSets.main.res
-                    }
-                }
-            }
+            allSourceSets.addAll(proj.android.sourceSets.main.java.srcDirs)
+            allSourceSets.add(proj.buildDir.path + "/source/r/" + rDir)
+
+            allResourcesSets.add(proj.android.sourceSets.main.res)
         }
 
-        Test test = project.getTasks().create(ROBOSPOCK_TASK_NAME, Test.class);
+        project.sourceSets.main{
+            java.srcDirs = allSourceSets
+            resources.srcDirs = allResourcesSets
+        }
+
+        Test test = project.tasks.create(ROBOSPOCK_TASK_NAME, Test.class);
         project.getTasks().getByName(JavaBasePlugin.CHECK_TASK_NAME).dependsOn(test);
         test.setDescription("Runs the unit tests using Robospock.")
         test.setGroup(JavaBasePlugin.VERIFICATION_GROUP)
@@ -148,9 +129,6 @@ class RobospockAction implements Action<Project> {
     }
 
     def getAndroidPlugin(Project project) {
-        if (project.plugins.hasPlugin("android"))
-            project.plugins["android"]
-        else
-            project.plugins["android-library"]
+        project.plugins.hasPlugin("android") ? project.plugins["android"] : project.plugins["android-library"]
     }
 }

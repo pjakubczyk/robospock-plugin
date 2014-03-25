@@ -14,11 +14,9 @@ class RobospockPlugin implements Plugin<Project> {
 
 
     void apply(Project project) {
-
-        project.getPlugins().apply(JavaBasePlugin.class);
-
-        project.afterEvaluate(new RobospockAction())
+        new RobospockAction().execute(project)
     }
+
 
 
 
