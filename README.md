@@ -5,8 +5,34 @@ Gradle plugin for RoboSpock allows you to integrate unit test support (robolectr
 
 Check out more on [http://robospock.org/]
 
+Important note for build.gradle:
+
+```sh
+apply plugin: 'groovy'
+
+dependencies {
+  compile "org.codehaus.groovy:groovy-all:1.8.6"
+  compile 'org.robospock:robospock:0.4'
+}
+
+
+project.ext {
+    robospock = ":android-sample" // project to test
+}
+
+apply plugin: 'robospock'
+```
+
+Applying *robospock* plugin **must** be places after *android* plugin declaration.
+
+
 Changelog
 =========
+
+## 0.4.0
+
+* Robospock plugin extends java source sets instead of overriding classpath
+* Better integration with IntelliJ
 
 ## 0.3.1
 
