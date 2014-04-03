@@ -33,14 +33,17 @@ class RobospockAction implements Action<Project> {
         def allResourcesSets = ['src/main/res']
 
         allprojects.each { proj ->
-            def rDir
+            def genDir
             if (proj.plugins.hasPlugin("android"))
-                rDir = (proj.android.applicationVariants as List)[0].dirName
+                genDir = (proj.android.applicationVariants as List)[0].dirName
             else
-                rDir = (proj.android.libraryVariants as List)[0].dirName
+                genDir = (proj.android.libraryVariants as List)[0].dirName
 
             allSourceSets.addAll(proj.android.sourceSets.main.java.srcDirs)
-            allSourceSets.add(proj.buildDir.path + "/source/r/" + rDir)
+
+            ["r/", "buildConfig/"].each {
+                allSourceSets.add(proj.buildDir.path + "/source/" + it + genDir)
+            }
 
             allResourcesSets.add(proj.android.sourceSets.main.res)
         }
