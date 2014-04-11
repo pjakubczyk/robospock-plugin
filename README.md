@@ -8,6 +8,8 @@ Check out more on [http://robospock.org/]
 Important note for build.gradle:
 
 ```sh
+evaluationDependsOn(":android-sample")
+
 apply plugin: 'groovy'
 
 dependencies {
@@ -23,7 +25,7 @@ project.ext {
 apply plugin: 'robospock'
 ```
 
-Applying *robospock* plugin **must** be places after *android* plugin declaration.
+The *robospock* plugin **must** be applied after the *android* plugin. Gradle provides the *evaluationDependsOn* configuration to accomplish this.  See example above.
 
 
 Changelog
