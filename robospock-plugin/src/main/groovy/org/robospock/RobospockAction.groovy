@@ -80,15 +80,9 @@ class RobospockAction implements Action<Project> {
     }
 
     def findCompileDependencies(Project androidProject) {
-        def androidProjectDependenciesList = new ArrayList()
-
-        androidProject.dependencies.each {
-            androidProjectDependenciesList = it.configurationContainer.all.find {
-                it.name == 'compile'
-            }.getAllDependencies()
-        }
-
-        return androidProjectDependenciesList
+        androidProject.configurations.all.find {
+            it.name == 'compile'
+        }.getAllDependencies()
     }
 
     def findMavenDependencies(Project androidProject) {
