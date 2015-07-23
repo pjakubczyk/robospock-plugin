@@ -31,6 +31,8 @@ The *robospock* plugin **must** be applied after the *android* plugin. Gradle pr
 Changelog
 =========
 
+## PROJECT IS DEAD
+
 ## 0.4.0
 
 * Robospock plugin extends java source sets instead of overriding classpath
